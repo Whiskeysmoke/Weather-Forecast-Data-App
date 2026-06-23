@@ -12,17 +12,27 @@ option = st.selectbox("Select data to view",
 st.subheader(f"{option} for the next {days} days in {place}")
 
 if place:
-    filtered_data = get_data(place, days)
+    try:
+        filtered_data = get_data(place, days)
 
-    if option == "Temperature":
-        temperatures = [dict["main"]["temp"] for dict in filtered_data]
-        dates = [dict["dt_txt"] for dict in filtered_data]
-        figure = px.line(x=dates, y=temperatures, labels={"x": "Dates", "y": "Temperature (C)"})
-        st.plotly_chart(figure)
+        if option == "Temperature":
+            temperatures = [dict["main"]["temp"] / 10 for dict in filtered_data]
+            dates = [dict["dt_txt"] for dict in filtered_data]
+            figure = px.line(x=dates, y=temperatures, labels={"x": "Dates", "y": "Temperature (C)"})
+            st.plotly_chart(figure)
 
-    elif option == "Sky":
-        images = {"Clear":"images/clear.png", "Clouds":"images/cloud.png",
-                  "Rain":"images/rain.png", "Snow":"images/snow.png"}
-        sky_conditions = [dict["weather"][0]["main"] for dict in filtered_data]
-        image_paths = [images[condition] for condition in sky_conditions]
-        st.image(image_paths, width=115)
+        elif option == "Sky":
+            images = {"Clear":"images/clear.png", "Clouds":"images/cloud.png",
+                      "Rain":"images/rain.png", "Snow":"images/snow.png"}
+            sky_conditions = [dict["weather"][0]["main"] for dict in
+                              filtered_data]
+            dates = [dict["dt_txt"] for dict in filtered_data]
+            max_cols = 5
+            for i in range(0, len(sky_conditions), max_cols):
+                cols = st.columns(max_cols)
+                for col, condition, date in zip(cols, sky_conditions[i:i + max_cols], dates[i:i + max_cols]):
+                    with col:
+                        st.image(images[condition], width=115)
+                        st.caption(date)
+    except KeyError:
+        st.write("That place does not exist.")
